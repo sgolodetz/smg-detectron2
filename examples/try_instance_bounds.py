@@ -6,7 +6,7 @@ import sys
 
 from detectron2.structures import Instances
 from sklearn.mixture import GaussianMixture
-from typing import List, Tuple
+from typing import List, Optional, Tuple
 
 from smg.detectron2 import InstanceSegmenter
 from smg.open3d import VisualisationUtil
@@ -15,43 +15,52 @@ from smg.utility import GeometryUtil
 
 
 def make_instance_bounds(instance: InstanceSegmenter.Instance, depth_image: np.ndarray,
-                         ws_points: np.ndarray) -> Tuple[np.ndarray, np.ndarray]:
-    combined_mask: np.ndarray = np.where((instance.pred_mask != 0) & (depth_image != 0), 255, 0).astype(np.uint8)
-    combined_mask = cv2.erode(combined_mask, (5, 5))
+                         ws_points: np.ndarray) -> Optional[Tuple[np.ndarray, np.ndarray]]:
+    try:
+        combined_mask: np.ndarray = np.where((instance.pred_mask != 0) & (depth_image != 0), 255, 0).astype(np.uint8)
+        combined_mask = cv2.erode(combined_mask, (5, 5))
 
-    cv2.imshow("Combined Mask", combined_mask)
-    cv2.waitKey(1)
+        cv2.imshow("Combined Mask", combined_mask)
+        cv2.waitKey(1)
 
-    depths = depth_image[np.where(combined_mask)]
-    reshaped_depths = depths.reshape(-1, 1)
-    gm: GaussianMixture = GaussianMixture().fit(reshaped_depths)  # Check for ValueErrors
-    scores: np.ndarray = gm.score_samples(reshaped_depths)
-    probs = np.exp(scores)
-    probs = (probs - np.min(probs)) / (np.max(probs) - np.min(probs))
-    depths = depths[np.where(probs >= 0.5)]
-    min_depth = np.min(depths)
-    max_depth = np.max(depths)
-    combined_mask = np.where((depth_image >= min_depth) & (depth_image <= max_depth), combined_mask, 0).astype(np.uint8)
-    print(f"{instance.pred_class}: {min_depth}, {max_depth}, {np.count_nonzero(combined_mask)}")
+        depths = depth_image[np.where(combined_mask)]
+        reshaped_depths = depths.reshape(-1, 1)
+        gm: GaussianMixture = GaussianMixture().fit(reshaped_depths)  # Check for ValueErrors
+        scores: np.ndarray = gm.score_samples(reshaped_depths)
+        probs = np.exp(scores)
+        probs = (probs - np.min(probs)) / (np.max(probs) - np.min(probs))
+        depths = depths[np.where(probs >= 0.5)]
+        min_depth = np.min(depths)
+        max_depth = np.max(depths)
+        combined_mask = np.where((depth_image >= min_depth) & (depth_image <= max_depth), combined_mask, 0).astype(np.uint8)
+        print(f"{instance.pred_class}: {min_depth}, {max_depth}, {np.count_nonzero(combined_mask)}")
 
-    print(f"{instance.pred_class}: {list(depths)}")
-    plt.hist(depths, 50)
-    plt.title(f"{instance.pred_class}")
-    plt.xlabel("Depth")
-    plt.ylabel("Count")
-    plt.grid(True)
-    plt.show()
+        print(f"{instance.pred_class}: {list(depths)}")
+        plt.hist(depths, 50)
+        plt.title(f"{instance.pred_class}")
+        plt.xlabel("Depth")
+        plt.ylabel("Count")
+        plt.grid(True)
+        plt.show()
 
-    masked_ws_points: np.ndarray = np.where(np.atleast_3d(combined_mask), ws_points, np.full(ws_points.shape, np.nan))
-    return np.array([
-        np.nanmin(masked_ws_points[:, :, 0]),
-        np.nanmin(masked_ws_points[:, :, 1]),
-        np.nanmin(masked_ws_points[:, :, 2]),
-    ]), np.array([
-        np.nanmax(masked_ws_points[:, :, 0]),
-        np.nanmax(masked_ws_points[:, :, 1]),
-        np.nanmax(masked_ws_points[:, :, 2]),
-    ])
+        masked_ws_points: np.ndarray = np.where(np.atleast_3d(combined_mask), ws_points, np.full(ws_points.shape, np.nan))
+        mins: np.ndarray = np.array([
+            np.nanmin(masked_ws_points[:, :, 0]),
+            np.nanmin(masked_ws_points[:, :, 1]),
+            np.nanmin(masked_ws_points[:, :, 2]),
+        ])
+        maxs: np.ndarray = np.array([
+            np.nanmax(masked_ws_points[:, :, 0]),
+            np.nanmax(masked_ws_points[:, :, 1]),
+            np.nanmax(masked_ws_points[:, :, 2]),
+        ])
+        centre: np.ndarray = (mins + maxs) / 2
+        scale: float = 1.25
+        mins = centre + scale * (mins - centre)
+        maxs = centre + scale * (maxs - centre)
+        return mins, maxs
+    except ValueError:
+        return None
 
 
 def main() -> None:
@@ -68,7 +77,7 @@ def main() -> None:
             from scipy import ndimage
             gradient_image: np.ndarray = ndimage.gaussian_gradient_magnitude(depth_image, sigma=3)
             cv2.imshow("Gradient Image", gradient_image)
-            # print(np.min(gradient_image), np.mean(gradient_image), np.max(gradient_image))
+            print(np.min(gradient_image), np.mean(gradient_image), np.max(gradient_image))
             gradient_mask: np.ndarray = np.where(gradient_image >= 0.1, 255, 0).astype(np.uint8)
             cv2.imshow("Gradient Mask", gradient_mask)
 
@@ -82,7 +91,7 @@ def main() -> None:
 
         intrinsics: Tuple[float, float, float, float] = camera.get_colour_intrinsics()
         pcd: o3d.geometry.PointCloud = VisualisationUtil.make_rgbd_image_point_cloud(
-            segmented_image, depth_image, intrinsics
+            colour_image, depth_image, intrinsics
         )
         to_visualise: List[o3d.geometry.Geometry] = [pcd]
 
@@ -92,7 +101,10 @@ def main() -> None:
 
         instances: List[InstanceSegmenter.Instance] = segmenter.parse_raw_instances(raw_instances)
         for instance in instances:
-            mins, maxs = make_instance_bounds(instance, depth_image, ws_points)
+            bounds = make_instance_bounds(instance, depth_image, ws_points)
+            if bounds is None:
+                continue
+            mins, maxs = bounds
             box: o3d.geometry.AxisAlignedBoundingBox = o3d.geometry.AxisAlignedBoundingBox(mins, maxs)
             box.color = (1.0, 0.0, 1.0)
             to_visualise.append(box)
