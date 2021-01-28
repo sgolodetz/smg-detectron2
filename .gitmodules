@@ -1,0 +1,3 @@
+[submodule "smg/external/detectron2"]
+	path = smg/external/detectron2
+	url = git@github.com:ivanpp/detectron2.git
