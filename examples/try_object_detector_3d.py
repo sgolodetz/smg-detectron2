@@ -22,7 +22,7 @@ def main() -> None:
             # Get an RGB-D image from the camera.
             colour_image, depth_image = camera.get_images()
 
-            # Find the 2D instances in the image.
+            # Find any 2D instances in the image.
             raw_instances: Instances = segmenter.segment_raw(colour_image)
 
             # Draw the 2D instances so that they can be shown to the user.
