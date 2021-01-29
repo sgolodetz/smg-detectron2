@@ -109,10 +109,10 @@ class ObjectDetector3D:
         :param intrinsics:      The camera intrinsics, as an (fx, fy, cx, cy) tuple.
         :return:                The 3D objects detected in the RGB-D image.
         """
-        return self.lift_instances_to_objects(self.__segmenter.segment(colour_image), depth_image, pose, intrinsics)
+        return self.lift_to_3d(self.__segmenter.segment(colour_image), depth_image, pose, intrinsics)
 
-    def lift_instances_to_objects(self, instances: List[InstanceSegmenter.Instance], depth_image: np.ndarray,
-                                  pose: np.ndarray, intrinsics: Tuple[float, float, float, float]) -> List[Object3D]:
+    def lift_to_3d(self, instances: List[InstanceSegmenter.Instance], depth_image: np.ndarray,
+                   pose: np.ndarray, intrinsics: Tuple[float, float, float, float]) -> List[Object3D]:
         """
         Lift a set of 2D instances to 3D objects by generating 3D bounding boxes for them.
 

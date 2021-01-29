@@ -47,7 +47,7 @@ def main() -> None:
         )
         to_visualise.append(pcd)
 
-        objects: List[ObjectDetector3D.Object3D] = detector.lift_instances_to_objects(
+        objects: List[ObjectDetector3D.Object3D] = detector.lift_to_3d(
             segmenter.parse_raw_instances(raw_instances), depth_image, np.eye(4), intrinsics
         )
 
