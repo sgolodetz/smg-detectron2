@@ -15,7 +15,7 @@ def main() -> None:
     np.set_printoptions(threshold=sys.maxsize)
 
     segmenter: InstanceSegmenter = InstanceSegmenter.make_mask_rcnn()
-    detector: ObjectDetector3D = ObjectDetector3D(segmenter)
+    detector: ObjectDetector3D = ObjectDetector3D(segmenter, debug=True)
 
     with OpenNICamera(mirror_images=True) as camera:
         while True:
@@ -37,12 +37,12 @@ def main() -> None:
         )
         to_visualise: List[o3d.geometry.Geometry] = [pcd]
 
-        objects: List[ObjectDetector3D.Object] = detector.lift_instances_to_objects(
+        objects: List[ObjectDetector3D.Object3D] = detector.lift_instances_to_objects(
             segmenter.parse_raw_instances(raw_instances), depth_image, np.eye(4), intrinsics
         )
         for obj in objects:
-            box: o3d.geometry.AxisAlignedBoundingBox = o3d.geometry.AxisAlignedBoundingBox(*obj.pred_box_3d)
-            box.color = (1.0, 0.0, 1.0)
+            box: o3d.geometry.AxisAlignedBoundingBox = o3d.geometry.AxisAlignedBoundingBox(*obj.box_3d)
+            box.color = (1.0, 0.0, 0.0)
             to_visualise.append(box)
 
         VisualisationUtil.visualise_geometries(to_visualise)
