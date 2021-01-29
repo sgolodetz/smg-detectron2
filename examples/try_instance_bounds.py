@@ -41,8 +41,7 @@ def main() -> None:
             segmenter.parse_raw_instances(raw_instances), depth_image, np.eye(4), intrinsics
         )
         for obj in objects:
-            mins, maxs = obj.pred_box_3d
-            box: o3d.geometry.AxisAlignedBoundingBox = o3d.geometry.AxisAlignedBoundingBox(mins, maxs)
+            box: o3d.geometry.AxisAlignedBoundingBox = o3d.geometry.AxisAlignedBoundingBox(*obj.pred_box_3d)
             box.color = (1.0, 0.0, 1.0)
             to_visualise.append(box)
 

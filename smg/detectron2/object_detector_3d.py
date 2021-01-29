@@ -13,7 +13,7 @@ from .instance_segmenter import InstanceSegmenter
 
 
 class ObjectDetector3D:
-    """TODO"""
+    """A 3D object detector based on back-projecting the instances detecting by one of the Detectron2 models."""
 
     # NESTED TYPES
 
@@ -23,6 +23,12 @@ class ObjectDetector3D:
         # CONSTRUCTOR
 
         def __init__(self, instance: InstanceSegmenter.Instance, pred_box_3d: Tuple[np.ndarray, np.ndarray]):
+            """
+            TODO
+
+            :param instance:    TODO
+            :param pred_box_3d: TODO
+            """
             self.__instance: InstanceSegmenter.Instance = instance
             self.__pred_box_3d: Tuple[np.ndarray, np.ndarray] = pred_box_3d
 
@@ -30,37 +36,85 @@ class ObjectDetector3D:
 
         @property
         def pred_box_2d(self) -> Tuple[float, float, float, float]:
+            """
+            TODO
+
+            :return:    TODO
+            """
             return self.__instance.pred_box
 
         @property
         def pred_box_3d(self) -> Tuple[np.ndarray, np.ndarray]:
+            """
+            TODO
+
+            :return:    TODO
+            """
             return self.__pred_box_3d
 
         @property
         def pred_class(self) -> str:
+            """
+            TODO
+
+            :return:    TODO
+            """
             return self.__instance.pred_class
 
         @property
         def pred_mask(self) -> np.ndarray:
+            """
+            TODO
+
+            :return:    TODO
+            """
             return self.__instance.pred_mask
 
         @property
         def score(self) -> float:
+            """
+            TODO
+
+            :return:    TODO
+            """
             return self.__instance.score
 
     # CONSTRUCTOR
 
     def __init__(self, segmenter: InstanceSegmenter):
+        """
+        TODO
+
+        :param segmenter:   TODO
+        """
         self.__segmenter: InstanceSegmenter = segmenter
 
     # PUBLIC METHODS
 
     def detect_objects(self, colour_image: np.ndarray, depth_image: np.ndarray, pose: np.ndarray,
                        intrinsics: Tuple[float, float, float, float]) -> List[Object]:
+        """
+        TODO
+
+        :param colour_image:    TODO
+        :param depth_image:     TODO
+        :param pose:            TODO
+        :param intrinsics:      TODO
+        :return:                TODO
+        """
         return self.lift_instances_to_objects(self.__segmenter.segment(colour_image), depth_image, pose, intrinsics)
 
     def lift_instances_to_objects(self, instances: List[InstanceSegmenter.Instance], depth_image: np.ndarray,
                                   pose: np.ndarray, intrinsics: Tuple[float, float, float, float]) -> List[Object]:
+        """
+        TODO
+
+        :param instances:   TODO
+        :param depth_image: TODO
+        :param pose:        TODO
+        :param intrinsics:  TODO
+        :return:            TODO
+        """
         objects: List[ObjectDetector3D.Object] = []
         ws_points: np.ndarray = GeometryUtil.compute_world_points_image_fast(depth_image, pose, intrinsics)
 
@@ -79,6 +133,14 @@ class ObjectDetector3D:
     @staticmethod
     def __predict_box_3d(instance: InstanceSegmenter.Instance, depth_image: np.ndarray, ws_points: np.ndarray) \
             -> Optional[Tuple[np.ndarray, np.ndarray]]:
+        """
+        TODO
+
+        :param instance:    TODO
+        :param depth_image: TODO
+        :param ws_points:   TODO
+        :return:            TODO
+        """
         try:
             combined_mask: np.ndarray = np.where(
                 (instance.pred_mask != 0) & (depth_image != 0), 255, 0
