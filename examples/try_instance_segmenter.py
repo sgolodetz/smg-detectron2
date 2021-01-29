@@ -29,7 +29,7 @@ def main() -> None:
         # Show the individual instance masks.
         for i in range(len(instances)):
             instance: InstanceSegmenter.Instance = instances[i]
-            cv2.imshow(f"Mask {i}", instance.pred_mask)
+            cv2.imshow(f"Mask {i}", instance.mask)
 
         c: int = cv2.waitKey(1)
         if c == ord('q'):

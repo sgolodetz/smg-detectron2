@@ -29,53 +29,52 @@ class InstanceSegmenter:
     # NESTED TYPES
 
     class Instance:
-        """A detected instance."""
+        """A segmented instance."""
 
         # CONSTRUCTOR
 
-        def __init__(self, pred_box: Tuple[float, float, float, float], pred_class: str,
-                     pred_mask: np.ndarray, score: float):
+        def __init__(self, box: Tuple[float, float, float, float], label: str, mask: np.ndarray, score: float):
             """
-            Construct a detected instance.
+            Construct a segmented instance.
 
-            :param pred_box:    The bounding box predicted for the instance.
-            :param pred_class:  The class predicted for the instance.
-            :param pred_mask:   The binary mask predicted for the instance.
-            :param score:       The score predicted for the instance (a float in [0,1]).
+            :param box:    The bounding box predicted for the instance.
+            :param label:  The class label predicted for the instance.
+            :param mask:   The binary mask predicted for the instance.
+            :param score:  The score predicted for the instance (a float in [0,1]).
             """
-            self.__pred_box: Tuple[float, float, float, float] = pred_box
-            self.__pred_class: str = pred_class
-            self.__pred_mask: np.ndarray = pred_mask
+            self.__box: Tuple[float, float, float, float] = box
+            self.__label: str = label
+            self.__mask: np.ndarray = mask
             self.__score: float = score
 
         # PROPERTIES
 
         @property
-        def pred_box(self) -> Tuple[float, float, float, float]:
+        def box(self) -> Tuple[float, float, float, float]:
             """
             Get the bounding box predicted for the instance.
 
             :return:    The bounding box predicted for the instance.
             """
-            return self.__pred_box
+            return self.__box
 
         @property
-        def pred_class(self) -> str:
+        def label(self) -> str:
             """
-            Get the class predicted for the instance.
+            Get the class label predicted for the instance.
 
-            :return:    The class predicted for the instance.
+            :return:    The class label predicted for the instance.
             """
-            return self.__pred_class
+            return self.__label
 
         @property
-        def pred_mask(self) -> np.ndarray:
+        def mask(self) -> np.ndarray:
             """
             Get the binary mask predicted for the instance.
 
             :return:    The binary mask predicted for the instance.
             """
-            return self.__pred_mask
+            return self.__mask
 
         @property
         def score(self) -> float:
@@ -150,12 +149,12 @@ class InstanceSegmenter:
 
         for i in range(len(raw_instances)):
             fields: Dict[str, Any] = raw_instances[i].get_fields()
-            pred_box: Tuple[float, float, float, float] = tuple(*fields["pred_boxes"].tensor.cpu().detach().numpy())
-            pred_class: str = class_names[fields["pred_classes"].cpu().detach().numpy()[0]]
-            pred_mask: np.ndarray = fields["pred_masks"].cpu().detach().numpy().squeeze()
-            pred_mask = np.where(pred_mask, 255, 0).astype(np.uint8)
+            box: Tuple[float, float, float, float] = tuple(*fields["pred_boxes"].tensor.cpu().detach().numpy())
+            label: str = class_names[fields["pred_classes"].cpu().detach().numpy()[0]]
+            mask: np.ndarray = fields["pred_masks"].cpu().detach().numpy().squeeze()
+            mask = np.where(mask, 255, 0).astype(np.uint8)
             score: float = fields["scores"].cpu().detach().numpy()[0]
-            instances.append(InstanceSegmenter.Instance(pred_box, pred_class, pred_mask, score))
+            instances.append(InstanceSegmenter.Instance(box, label, mask, score))
 
         return instances
 

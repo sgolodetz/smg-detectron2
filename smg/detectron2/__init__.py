@@ -1,1 +1,2 @@
 from .instance_segmenter import InstanceSegmenter
+from .object_detector_3d import ObjectDetector3D
