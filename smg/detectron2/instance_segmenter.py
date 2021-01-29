@@ -29,7 +29,7 @@ class InstanceSegmenter:
     # NESTED TYPES
 
     class Instance:
-        """A detected instance."""
+        """A segmented instance."""
 
         # CONSTRUCTOR
 
