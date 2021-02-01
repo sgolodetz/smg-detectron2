@@ -100,16 +100,18 @@ class InstanceSegmenter:
 
     @staticmethod
     def make_mask_rcnn(*, config_path: str = "COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml",
-                       score_threshold: float = 0.75) -> InstanceSegmenter:
+                       device: str = "cuda", score_threshold: float = 0.75) -> InstanceSegmenter:
         """
         Make an instance segmenter that uses a Mask R-CNN model.
 
         :param config_path:     The path to the model configuration file.
+        :param device:          The device on which to run the model (cpu|cuda).
         :param score_threshold: The minimum detection score needed to detect an instance.
         :return:                The instance segmenter.
         """
         cfg: CfgNode = get_cfg()
         cfg.merge_from_file(model_zoo.get_config_file(config_path))
+        cfg.MODEL.DEVICE = device
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = score_threshold
         cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(config_path)
         return InstanceSegmenter(cfg)
