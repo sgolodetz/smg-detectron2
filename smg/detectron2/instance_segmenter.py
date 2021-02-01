@@ -3,6 +3,7 @@ from __future__ import annotations
 import logging
 import numpy as np
 import os
+import torch
 
 # Suppress some annoying internal warnings produced by Detectron2 - there's nothing much we can do about them.
 logging.captureWarnings(True)
@@ -94,24 +95,25 @@ class InstanceSegmenter:
         :param cfg: The model configuration.
         """
         self.__cfg: CfgNode = cfg
-        self.__predictor: DefaultPredictor = DefaultPredictor(cfg)
+        self.__stream: torch.cuda.Stream = torch.cuda.Stream()
+
+        with torch.cuda.stream(self.__stream):
+            self.__predictor: DefaultPredictor = DefaultPredictor(cfg)
 
     # PUBLIC STATIC METHODS
 
     @staticmethod
     def make_mask_rcnn(*, config_path: str = "COCO-InstanceSegmentation/mask_rcnn_R_101_FPN_3x.yaml",
-                       device: str = "cuda", score_threshold: float = 0.75) -> InstanceSegmenter:
+                       score_threshold: float = 0.75) -> InstanceSegmenter:
         """
         Make an instance segmenter that uses a Mask R-CNN model.
 
         :param config_path:     The path to the model configuration file.
-        :param device:          The device on which to run the model (cpu|cuda).
         :param score_threshold: The minimum detection score needed to detect an instance.
         :return:                The instance segmenter.
         """
         cfg: CfgNode = get_cfg()
         cfg.merge_from_file(model_zoo.get_config_file(config_path))
-        cfg.MODEL.DEVICE = device
         cfg.MODEL.ROI_HEADS.SCORE_THRESH_TEST = score_threshold
         cfg.MODEL.WEIGHTS = model_zoo.get_checkpoint_url(config_path)
         return InstanceSegmenter(cfg)
@@ -149,14 +151,15 @@ class InstanceSegmenter:
 
         class_names: List[str] = self.__get_metadata().get("thing_classes", None)
 
-        for i in range(len(raw_instances)):
-            fields: Dict[str, Any] = raw_instances[i].get_fields()
-            box: Tuple[float, float, float, float] = tuple(*fields["pred_boxes"].tensor.cpu().detach().numpy())
-            label: str = class_names[fields["pred_classes"].cpu().detach().numpy()[0]]
-            mask: np.ndarray = fields["pred_masks"].cpu().detach().numpy().squeeze()
-            mask = np.where(mask, 255, 0).astype(np.uint8)
-            score: float = fields["scores"].cpu().detach().numpy()[0]
-            instances.append(InstanceSegmenter.Instance(box, label, mask, score))
+        with torch.cuda.stream(self.__stream):
+            for i in range(len(raw_instances)):
+                fields: Dict[str, Any] = raw_instances[i].get_fields()
+                box: Tuple[float, float, float, float] = tuple(*fields["pred_boxes"].tensor.cpu().detach().numpy())
+                label: str = class_names[fields["pred_classes"].cpu().detach().numpy()[0]]
+                mask: np.ndarray = fields["pred_masks"].cpu().detach().numpy().squeeze()
+                mask = np.where(mask, 255, 0).astype(np.uint8)
+                score: float = fields["scores"].cpu().detach().numpy()[0]
+                instances.append(InstanceSegmenter.Instance(box, label, mask, score))
 
         return instances
 
@@ -176,7 +179,10 @@ class InstanceSegmenter:
         :param image:   The image to segment.
         :return:        The raw instances output by Detectron2.
         """
-        return self.__predictor(image)["instances"]
+        with torch.cuda.stream(self.__stream):
+            raw_instances: Instances = self.__predictor(image)["instances"]
+
+        return raw_instances
 
     # PRIVATE METHODS
 
