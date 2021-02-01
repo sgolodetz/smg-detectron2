@@ -196,7 +196,7 @@ class ObjectDetector3D:
                 print(f"  * Depth Range: [{min_depth}, {max_depth}], Usable Pixels: {np.count_nonzero(usable_mask)}")
                 print(f"  * Depths: {list(depths)}")
 
-                plt.hist(depths)  # , 50)
+                plt.hist(depths)
                 plt.title(f"{instance.label}")
                 plt.xlabel("Depth")
                 plt.ylabel("Count")
