@@ -2,17 +2,12 @@ from __future__ import annotations
 
 import logging
 import numpy as np
-import os
 import torch
 
 # Suppress some annoying internal warnings produced by Detectron2 - there's nothing much we can do about them.
 logging.captureWarnings(True)
 logging.getLogger("py.warnings").setLevel(logging.CRITICAL)
 logging.getLogger("fvcore.common.file_io").setLevel(logging.CRITICAL)
-
-# Set the location of the model cache.
-# FIXME: This is very machine-specific - something should be done about this ultimately.
-os.environ["FVCORE_CACHE"] = "D:/fvcore_cache"
 
 from typing import Any, Dict, List, Tuple
 
