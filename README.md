@@ -26,7 +26,7 @@ Note: Please read the [top-level README](https://github.com/sgolodetz/smglib/blo
 
 5. Install Detectron2 as per [here](https://ivanpp.cc/detectron2-walkthrough-windows). If you run into any trouble:
 
-   i. If you get the error `ImportError: cannot import name '_nt_quote_args' from 'distutils.spawn'`, install `setuptools` version `59.6` or below. (See also: `https://github.com/pytorch/pytorch/issues/70390`.)
+   i. If you get the error `ImportError: cannot import name '_nt_quote_args' from 'distutils.spawn'`, install `setuptools` version `59.6` or below. (See also [here](https://github.com/pytorch/pytorch/issues/70390).)
 
    ii. Try applying the fixes in `fix_torch_for_detectron2.sh`. (With newer versions of PyTorch, they may no longer be needed.)
 
