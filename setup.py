@@ -17,7 +17,9 @@ setup(
     install_requires=[
         "detectron2",
         "numpy",
+        "opencv-contrib-python==3.4.2.16",
         "scikit-learn",
+        "smg-utility",
         "torch",
         "torchaudio",
         "torchvision"

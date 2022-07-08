@@ -24,7 +24,11 @@ Note: Please read the [top-level README](https://github.com/sgolodetz/smglib/blo
 
 4. Install `cudatoolkit`, e.g. via `conda install cudatoolkit==11.3.1` (the version you need may be different).
 
-5. Install Detectron2 as per [here](https://ivanpp.cc/detectron2-walkthrough-windows). If you run into any trouble, try applying the fixes in `fix_torch_for_detectron2.sh`. (With newer versions of PyTorch, they may no longer be needed.)
+5. Install Detectron2 as per [here](https://ivanpp.cc/detectron2-walkthrough-windows). If you run into any trouble:
+
+   i. If you get the error `ImportError: cannot import name '_nt_quote_args' from 'distutils.spawn'`, install `setuptools` version `59.6` or below. (See also: `https://github.com/pytorch/pytorch/issues/70390`.)
+
+   ii. Try applying the fixes in `fix_torch_for_detectron2.sh`. (With newer versions of PyTorch, they may no longer be needed.)
 
 6. Change to the `<root>/smg-detectron2` directory.
 
